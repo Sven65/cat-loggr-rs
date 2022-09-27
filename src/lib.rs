@@ -7,7 +7,6 @@ use owo_colors::{Style, OwoColorize};
 #[macro_use]
 extern crate lazy_static;
 
-
 #[derive(Debug)]
 pub struct LogLevel {
 	pub name: String,
@@ -26,28 +25,62 @@ pub enum Level {
 }
 
 lazy_static! {
-	static ref LOG_FATAL_CONFIG: LogLevel = LogLevel   { name: "fatal".to_string(), style: owo_colors::Style::new().red().on_black() };
-	static ref LOG_ERROR_CONFIG: LogLevel = LogLevel   { name: "error".to_string(), style: owo_colors::Style::new().black().on_red() };
-	static ref LOG_WARN_CONFIG: LogLevel = LogLevel    { name: "warn".to_string(), style: owo_colors::Style::new().black().on_yellow() };
-	static ref LOG_TRACE_CONFIG: LogLevel = LogLevel   { name: "trace".to_string(), style: owo_colors::Style::new().green().on_black() };
-	static ref LOG_INIT_CONFIG: LogLevel = LogLevel    { name: "init".to_string(), style: owo_colors::Style::new().black().on_blue() };
-	static ref LOG_INFO_CONFIG: LogLevel = LogLevel    { name: "info".to_string(), style: owo_colors::Style::new().black().on_green() };
-	static ref LOG_VERBOSE_CONFIG: LogLevel = LogLevel { name: "verbose".to_string(), style: owo_colors::Style::new().black().on_cyan() };
-	static ref LOG_DEBUG_CONFIG: LogLevel = LogLevel   { name: "debug".to_string(), style: owo_colors::Style::new().magenta().on_black() };
+	pub static ref LOG_FATAL_CONFIG: LogLevel = LogLevel   { name: "fatal".to_string(), style: owo_colors::Style::new().red().on_black() };
+	pub static ref LOG_ERROR_CONFIG: LogLevel = LogLevel   { name: "error".to_string(), style: owo_colors::Style::new().black().on_red() };
+	pub static ref LOG_WARN_CONFIG: LogLevel = LogLevel    { name: "warn".to_string(), style: owo_colors::Style::new().black().on_yellow() };
+	pub static ref LOG_TRACE_CONFIG: LogLevel = LogLevel   { name: "trace".to_string(), style: owo_colors::Style::new().green().on_black() };
+	pub static ref LOG_INIT_CONFIG: LogLevel = LogLevel    { name: "init".to_string(), style: owo_colors::Style::new().black().on_blue() };
+	pub static ref LOG_INFO_CONFIG: LogLevel = LogLevel    { name: "info".to_string(), style: owo_colors::Style::new().black().on_green() };
+	pub static ref LOG_VERBOSE_CONFIG: LogLevel = LogLevel { name: "verbose".to_string(), style: owo_colors::Style::new().black().on_cyan() };
+	pub static ref LOG_DEBUG_CONFIG: LogLevel = LogLevel   { name: "debug".to_string(), style: owo_colors::Style::new().magenta().on_black() };
+}
+
+impl Into<LogLevel> for &LOG_FATAL_CONFIG {
+    fn into(self) -> LogLevel { LogLevel { name: self.name.clone(), style: self.style } } 
+}
+
+impl Into<LogLevel> for &LOG_ERROR_CONFIG {
+    fn into(self) -> LogLevel { LogLevel { name: self.name.clone(), style: self.style } } 
+}
+
+
+impl Into<LogLevel> for &LOG_WARN_CONFIG {
+    fn into(self) -> LogLevel { LogLevel { name: self.name.clone(), style: self.style } } 
+}
+
+
+impl Into<LogLevel> for &LOG_TRACE_CONFIG {
+    fn into(self) -> LogLevel { LogLevel { name: self.name.clone(), style: self.style } } 
+}
+
+impl Into<LogLevel> for &LOG_INIT_CONFIG {
+    fn into(self) -> LogLevel { LogLevel { name: self.name.clone(), style: self.style } } 
+}
+
+impl Into<LogLevel> for &LOG_INFO_CONFIG {
+    fn into(self) -> LogLevel { LogLevel { name: self.name.clone(), style: self.style } } 
+}
+
+impl Into<LogLevel> for &LOG_VERBOSE_CONFIG {
+    fn into(self) -> LogLevel { LogLevel { name: self.name.clone(), style: self.style } } 
+}
+
+impl Into<LogLevel> for &LOG_DEBUG_CONFIG {
+    fn into(self) -> LogLevel { LogLevel { name: self.name.clone(), style: self.style } } 
 }
 
 
 impl Level {
-	pub fn extract(&self) -> &LogLevel {
+	pub fn extract(&self) -> LogLevel {
 		let level: LogLevel = match self {
-			Level::Fatal(level) => level,
-			Level::Error(level) => level,
-			Level::Warn(level) => level,
-			Level::Trace(level) => level,
-			Level::Init(level) => level,
-			Level::Info(level) => level,
-			Level::Verbose(level) => level,
-			Level::Debug(level) => level,
+			Level::Fatal(level) => level.into(),
+			Level::Error(level) => level.into(),
+			Level::Warn(level) => level.into(),
+			Level::Trace(level) => level.into(),
+			Level::Init(level) => level.into(),
+			Level::Info(level) => level.into(),
+			Level::Verbose(level) => level.into(),
+			Level::Debug(level) => level.into(),
 		};
 
 		level
@@ -71,8 +104,6 @@ pub fn write(
     &(target, module_path, file, line): &(&str, &'static str, &'static str, u32),
     kvs: Option<&[(&str, &str)]>,
 ) {
-
-	println!("Writing stuff {:#?}", level);
 
 	let log_level = level.extract();
 	let centered_str = centre_pad(&log_level.name, 6);
