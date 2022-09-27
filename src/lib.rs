@@ -7,6 +7,8 @@ use owo_colors::{Style, OwoColorize};
 #[macro_use]
 extern crate lazy_static;
 
+pub trait CommonTrait {}
+
 #[derive(Debug)]
 pub struct LogLevel {
 	pub name: String,
@@ -98,14 +100,14 @@ fn centre_pad(text: &String, length: usize) -> String {
 	}
 }
 
-pub fn write(
+pub fn write<T: Into<LogLevel>>(
 	args: fmt::Arguments,
-    level: Level,
+    level: T,
     &(target, module_path, file, line): &(&str, &'static str, &'static str, u32),
     kvs: Option<&[(&str, &str)]>,
 ) {
 
-	let log_level = level.extract();
+	let log_level: LogLevel = level.into();
 	let centered_str = centre_pad(&log_level.name, 6);
 
 	let level_str = centered_str.style(log_level.style);
@@ -155,5 +157,5 @@ macro_rules! log_info {
     (target: $target:expr, $($arg:tt)+) => ($crate::log!(target: $target, $crate::Level::Info, $($arg)+));
 
 	// log_info!("a {} event", "log")
-    ($($arg:tt)+) => ($crate::log!(LOG_INFO_CONFIG, $($arg)+))
+    ($($arg:tt)+) => ($crate::log!(&$crate::LOG_INFO_CONFIG, $($arg)+))
 }
