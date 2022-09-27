@@ -1,0 +1,10 @@
+[package]
+name = "cat-loggr"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[dependencies]
+owo-colors = "3.5.0"
+lazy_static = "1.4.0"
