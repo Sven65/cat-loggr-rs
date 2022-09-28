@@ -1,161 +1,382 @@
+#![feature(doc_cfg)]
+
+use std::{fmt, collections::HashMap, sync::Mutex};
+use chrono::{DateTime, Utc};
+use lazy_static::{lazy_static,};
+use loggr_config::LoggrConfig;
+use owo_colors::{OwoColorize};
+
+use log_level::LogLevel;
+
+pub mod log_level;
 pub mod loggr_config;
-pub mod level;
-use std::fmt;
 
-use owo_colors::{Style, OwoColorize};
+pub struct CatLoggr {
+	pub level_map: HashMap<String, LogLevel>,
 
-#[macro_use]
-extern crate lazy_static;
+	max_length: usize,
 
-pub trait CommonTrait {}
-
-#[derive(Debug)]
-pub struct LogLevel {
-	pub name: String,
-	pub style: Style,
+	timestamp_format: String,
+	shard: Option<String>,
+	shard_length: Option<usize>,
 }
 
-pub enum Level {
-	Fatal(LOG_FATAL_CONFIG),
-	Error(LOG_ERROR_CONFIG),
-	Warn(LOG_WARN_CONFIG),
-	Trace(LOG_TRACE_CONFIG),
-	Init(LOG_INIT_CONFIG),
-	Info(LOG_INFO_CONFIG),
-	Verbose(LOG_VERBOSE_CONFIG),
-	Debug(LOG_DEBUG_CONFIG),
+impl Default for CatLoggr {
+    fn default() -> Self {
+        Self {
+			level_map: Default::default(),
+			max_length: Default::default(),
+			timestamp_format: "%d/%m %H:%M:%S".to_string(),
+			shard: None,
+			shard_length: None,
+		}
+    }
 }
 
-lazy_static! {
-	pub static ref LOG_FATAL_CONFIG: LogLevel = LogLevel   { name: "fatal".to_string(), style: owo_colors::Style::new().red().on_black() };
-	pub static ref LOG_ERROR_CONFIG: LogLevel = LogLevel   { name: "error".to_string(), style: owo_colors::Style::new().black().on_red() };
-	pub static ref LOG_WARN_CONFIG: LogLevel = LogLevel    { name: "warn".to_string(), style: owo_colors::Style::new().black().on_yellow() };
-	pub static ref LOG_TRACE_CONFIG: LogLevel = LogLevel   { name: "trace".to_string(), style: owo_colors::Style::new().green().on_black() };
-	pub static ref LOG_INIT_CONFIG: LogLevel = LogLevel    { name: "init".to_string(), style: owo_colors::Style::new().black().on_blue() };
-	pub static ref LOG_INFO_CONFIG: LogLevel = LogLevel    { name: "info".to_string(), style: owo_colors::Style::new().black().on_green() };
-	pub static ref LOG_VERBOSE_CONFIG: LogLevel = LogLevel { name: "verbose".to_string(), style: owo_colors::Style::new().black().on_cyan() };
-	pub static ref LOG_DEBUG_CONFIG: LogLevel = LogLevel   { name: "debug".to_string(), style: owo_colors::Style::new().magenta().on_black() };
-}
+impl CatLoggr {
+	fn get_default_levels() -> Vec<LogLevel> {
+		let default_levels: Vec<LogLevel> = vec![
+			LogLevel   { name: "fatal".to_string(), style: owo_colors::Style::new().red().on_black() },
+			LogLevel   { name: "error".to_string(), style: owo_colors::Style::new().black().on_red() },
+			LogLevel   { name: "warn".to_string(), style: owo_colors::Style::new().black().on_yellow() },
+			LogLevel   { name: "trace".to_string(), style: owo_colors::Style::new().green().on_black() },
+			LogLevel   { name: "init".to_string(), style: owo_colors::Style::new().black().on_blue() },
+			LogLevel   { name: "info".to_string(), style: owo_colors::Style::new().black().on_green() },
+			LogLevel   { name: "verbose".to_string(), style: owo_colors::Style::new().black().on_cyan() },
+			LogLevel   { name: "debug".to_string(), style: owo_colors::Style::new().magenta().on_black() }
+		];
 
-impl Into<LogLevel> for &LOG_FATAL_CONFIG {
-    fn into(self) -> LogLevel { LogLevel { name: self.name.clone(), style: self.style } } 
-}
+		default_levels
+	}
 
-impl Into<LogLevel> for &LOG_ERROR_CONFIG {
-    fn into(self) -> LogLevel { LogLevel { name: self.name.clone(), style: self.style } } 
-}
+	pub fn config(&mut self, options: LoggrConfig) {
+		if options.timestamp_format.is_some() {
+			self.timestamp_format = options.timestamp_format.unwrap();
+		}
 
+		if options.shard.is_some() {
+			self.shard = options.shard;
+		}
 
-impl Into<LogLevel> for &LOG_WARN_CONFIG {
-    fn into(self) -> LogLevel { LogLevel { name: self.name.clone(), style: self.style } } 
-}
+		if options.shard_length.is_some() {
+			self.shard_length = options.shard_length;
+		}
+	}
 
+	pub fn new(options: Option<LoggrConfig>) -> Self {
+		let mut logger = Self::default();
 
-impl Into<LogLevel> for &LOG_TRACE_CONFIG {
-    fn into(self) -> LogLevel { LogLevel { name: self.name.clone(), style: self.style } } 
-}
+		if options.is_some() {
+			logger.config(options.unwrap());
+		}
 
-impl Into<LogLevel> for &LOG_INIT_CONFIG {
-    fn into(self) -> LogLevel { LogLevel { name: self.name.clone(), style: self.style } } 
-}
+		logger.set_levels(Self::get_default_levels());
+		
+		logger
+	}
 
-impl Into<LogLevel> for &LOG_INFO_CONFIG {
-    fn into(self) -> LogLevel { LogLevel { name: self.name.clone(), style: self.style } } 
-}
+	fn get_timestamp(&self) -> String {
+		let now: DateTime<Utc> = Utc::now();
 
-impl Into<LogLevel> for &LOG_VERBOSE_CONFIG {
-    fn into(self) -> LogLevel { LogLevel { name: self.name.clone(), style: self.style } } 
-}
+		let format_string = &self.timestamp_format;
 
-impl Into<LogLevel> for &LOG_DEBUG_CONFIG {
-    fn into(self) -> LogLevel { LogLevel { name: self.name.clone(), style: self.style } } 
-}
+		let formatted = now.format(&format_string);
 
+		formatted.to_string()
+	}
 
-impl Level {
-	pub fn extract(&self) -> LogLevel {
-		let level: LogLevel = match self {
-			Level::Fatal(level) => level.into(),
-			Level::Error(level) => level.into(),
-			Level::Warn(level) => level.into(),
-			Level::Trace(level) => level.into(),
-			Level::Init(level) => level.into(),
-			Level::Info(level) => level.into(),
-			Level::Verbose(level) => level.into(),
-			Level::Debug(level) => level.into(),
+	/// Overwrites the currently set levels with a custom set
+	/// 
+	/// # Arguments
+	/// 
+	/// * `levels` - New levels to override with
+	pub fn set_levels(&mut self, levels: Vec<LogLevel>) -> &Self {
+		self.level_map.clear();
+
+		let mut max = 0;
+
+		for level in levels.iter() {
+
+			max = if level.name.len() > max {
+				level.name.len()
+			} else {
+				max
+			};
+			
+			if !self.level_map.contains_key(&level.name) {
+				self.level_map.insert(level.name.clone(), level.clone());
+
+			}
+		}
+
+		self.max_length = max + 2;
+
+		self
+	}
+
+	/// Center aligns text
+	/// 
+	/// # Arguments
+	/// 
+	/// * `text` - The text to align
+	/// * `length` - The length that it should be padded to
+	fn centre_pad(text: &String, length: usize) -> String {
+		if text.len() < length {
+			let before_count = ((length - text.len()) as f32 / 2 as f32).floor() as usize;
+			let after_count = ((length - text.len()) as f32 / 2 as f32).ceil() as usize;
+	
+			format!("{}{}{}", " ".repeat(before_count), text, " ".repeat(after_count))
+		} else {
+			text.to_string()
+		}
+	}
+
+	/// Writes the log by taking [`fmt::Arguments`]
+	/// 
+	/// # Arguments
+	/// * `args` - The text to write
+	/// * `level` - The level to write at
+	pub fn __write(&self, args: fmt::Arguments, level: &str) {
+		self.log(format!("{}", args).as_str(), level);
+	}
+
+	/// Writes the log
+	/// 
+	/// # Arguments
+	/// * `text` - The text to write
+	/// * `level` - The level to write at
+	pub fn log(
+		&self,
+		text: &str,
+		level: &str,
+	) -> &Self {
+
+		if !self.level_map.contains_key(level) {
+			panic!("The level `{}` level doesn't exist.", level);
+		}
+
+		let shard_text = if self.shard.is_some() {
+			CatLoggr::centre_pad(&self.shard.clone().unwrap(), self.shard_length.unwrap())
+		} else {
+			"".to_string()
 		};
 
-		level
+		let formatted_shard_text = shard_text.black().on_yellow();
+
+		let log_level = self.level_map.get(level).unwrap();
+	
+		let centered_str = CatLoggr::centre_pad(&log_level.name, self.max_length);
+	
+		let level_str = centered_str.style(log_level.style);
+		
+		let timestamp = self.get_timestamp();
+		let formatted_timestamp = timestamp.black().on_white();
+	
+		println!("{}{}{} {}", formatted_shard_text, formatted_timestamp, level_str , text);
+	
+
+		self
 	}
 }
 
-fn centre_pad(text: &String, length: usize) -> String {
-	if text.len() < length {
-		let before_count = ((length - text.len()) as f32 / 2 as f32).floor() as usize;
-		let after_count = ((length - text.len()) as f32 / 2 as f32).ceil() as usize;
+#[cfg(feature = "macros")]
+lazy_static! {
+	#[doc(cfg(feature = "macros"))]
+	pub static ref CAT_LOGGR: Mutex<CatLoggr> = Mutex::new(CatLoggr::new(None));
+}
 
-		format!("{}{}{}", " ".repeat(before_count), text, " ".repeat(after_count))
-	} else {
-		text.to_string()
+#[doc(cfg(feature = "macros"))]
+#[cfg(feature = "macros")]
+mod macros {
+	/// Logs something to the console with a specified level, using the default logger.
+	/// 
+	/// 
+	/// # Example
+	/// 
+	/// ```rust
+	/// use cat_loggr::log;
+	/// 
+	/// log!("info", "Default log");
+	/// 
+	/// let data = vec!["a", "b", "c"];
+	/// 
+	/// log!("info", "Default log {:#?}", data);
+	/// ```
+	/// 
+	///
+	#[macro_export]
+	macro_rules! log {
+		// log!(target: "my_target", Level::Info; key1 = 42, key2 = true; "a {} event", "log");
+		(target: $target:expr, $lvl:expr, $($key:tt = $value:expr),+; $($arg:tt)+) => ({
+			cat_loggr::CAT_LOGGR.write(
+				format_args!($($args)*),
+				$lvl,
+			)
+		});
+
+		// log!(target: "my_target", Level::Info; "a {} event", "log");
+		(target: $target:expr, $lvl:expr, $($arg:tt)+) => ({
+			cat_loggr::CAT_LOGGR.lock().unwrap().__write(
+				format_args!($($arg)*),
+				$lvl,
+			);
+		});
+
+		($lvl:expr, $($arg:tt)+) => ($crate::log!(target: "", $lvl, $($arg)+));
+
 	}
-}
 
-pub fn write<T: Into<LogLevel>>(
-	args: fmt::Arguments,
-    level: T,
-    &(target, module_path, file, line): &(&str, &'static str, &'static str, u32),
-    kvs: Option<&[(&str, &str)]>,
-) {
+	/// Logs something to the console with the default fatal level, using the default logger.
+	/// 
+	/// # Example
+	/// 
+	/// ```rust
+	/// use cat_loggr::log_fatal;
+	///
+	/// log_fatal!("Default log");
+	/// 
+	/// let data = vec!["a", "b", "c"];
+	/// 
+	/// log_fatal!("{:#?}", data);
+	/// ```
+	#[macro_export]
+	macro_rules! log_fatal {
+		(target: $target:expr, $($arg:tt)+) => ($crate::log!(target: $target, "fatal", $($arg)+));
+		($($arg:tt)+) => ($crate::log!("fatal", $($arg)+))
+	}
 
-	let log_level: LogLevel = level.into();
-	let centered_str = centre_pad(&log_level.name, 6);
+	/// Logs something to the console with the default error level, using the default logger.
+	/// 
+	/// # Example
+	/// 
+	/// ```rust
+	/// use cat_loggr::log_error;
+	///
+	/// log_error!("Default log");
+	/// 
+	/// let data = vec!["a", "b", "c"];
+	/// 
+	/// log_error!("{:#?}", data);
+	/// ```
+	#[macro_export]
+	macro_rules! log_error {
+		(target: $target:expr, $($arg:tt)+) => ($crate::log!(target: $target, "error", $($arg)+));
+		($($arg:tt)+) => ($crate::log!("error", $($arg)+))
+	}
 
-	let level_str = centered_str.style(log_level.style);
+	/// Logs something to the console with the default warn level, using the default logger.
+	/// 
+	/// # Example
+	/// 
+	/// ```rust
+	/// use cat_loggr::log_warn;
+	///
+	/// log_warn!("Default log");
+	/// 
+	/// let data = vec!["a", "b", "c"];
+	/// 
+	/// log_warn!("{:#?}", data);
+	/// ```
+	#[macro_export]
+	macro_rules! log_warn {
+		(target: $target:expr, $($arg:tt)+) => ($crate::log!(target: $target, "warn", $($arg)+));
+		($($arg:tt)+) => ($crate::log!("warn", $($arg)+))
+	}
 
-	println!("{} {}", level_str , args);
+	/// Logs something to the console with the default trace level, using the default logger.
+	/// 
+	/// # Example
+	/// 
+	/// ```rust
+	/// use cat_loggr::log_trace;
+	///
+	/// log_trace!("Default log");
+	/// 
+	/// let data = vec!["a", "b", "c"];
+	/// 
+	/// log_trace!("{:#?}", data);
+	/// ```
+	#[macro_export]
+	macro_rules! log_trace {
+		(target: $target:expr, $($arg:tt)+) => ($crate::log!(target: $target, "trace", $($arg)+));
+		($($arg:tt)+) => ($crate::log!("trace", $($arg)+))
+	}
 
-	// let log_level = match level {
-	// 	Level::Info(a) => a
-	// }
+	/// Logs something to the console with the default init level, using the default logger.
+	/// 
+	/// # Example
+	/// 
+	/// ```rust
+	/// use cat_loggr::log_init;
+	///
+	/// log_init!("Default log");
+	/// 
+	/// let data = vec!["a", "b", "c"];
+	/// 
+	/// log_init!("{:#?}", data);
+	/// ```
+	#[macro_export]
+	macro_rules! log_init {
+		(target: $target:expr, $($arg:tt)+) => ($crate::log!(target: $target, "init", $($arg)+));
+		($($arg:tt)+) => ($crate::log!("init", $($arg)+))
+	}
 
-	// let level_string = level.
-}
 
-#[macro_export]
-macro_rules! log {
-	 // log!(target: "my_target", Level::Info; key1 = 42, key2 = true; "a {} event", "log");
-	(target: $target:expr, $lvl:expr, $($key:tt = $value:expr),+; $($arg:tt)+) => ({
-        $crate::write(
-			format_args!($($args)*),
-			$lvl,
-			&($target, __log_module_path!(), __log_file!(), __log_line!()),
-            $crate::__private_api::Option::Some(&[$((__log_key!($key), &$value)),+])
-		)
-    });
+	/// Logs something to the console with the default info level, using the default logger.
+	/// 
+	/// # Example
+	/// 
+	/// ```rust
+	/// use cat_loggr::log_info;
+	///
+	/// log_info!("Default log");
+	/// 
+	/// let data = vec!["a", "b", "c"];
+	/// 
+	/// log_info!("{:#?}", data);
+	/// ```
+	#[macro_export]
+	macro_rules! log_info {
+		(target: $target:expr, $($arg:tt)+) => ($crate::log!(target: $target, "info", $($arg)+));
+		($($arg:tt)+) => ($crate::log!("info", $($arg)+))
+	}
 
-    // log!(target: "my_target", Level::Info; "a {} event", "log");
-    (target: $target:expr, $lvl:expr, $($arg:tt)+) => ({
-		$crate::write(
-			format_args!($($arg)*),
-			$lvl,
-			// &($target, __log_module_path!(), __log_file!(), __log_line!()),
-			&($target, "", "", 0),
-			Option::None,
-		);
-    });
 
-    // log!(Level::Info, "a log event")
-    // ($lvl:expr, $($arg:tt)+) => ($crate::log!(target: __log_module_path!(), $lvl, $($arg)+));
-    ($lvl:expr, $($arg:tt)+) => ($crate::log!(target: "", $lvl, $($arg)+));
+	/// Logs something to the console with the default verbose level, using the default logger.
+	/// 
+	/// # Example
+	/// 
+	/// ```rust
+	/// use cat_loggr::log_verbose;
+	///
+	/// log_verbose!("Default log");
+	/// 
+	/// let data = vec!["a", "b", "c"];
+	/// 
+	/// log_verbose!("{:#?}", data);
+	/// ```
+	#[macro_export]
+	macro_rules! log_verbose {
+		(target: $target:expr, $($arg:tt)+) => ($crate::log!(target: $target, "verbose", $($arg)+));
+		($($arg:tt)+) => ($crate::log!("verbose", $($arg)+))
+	}
 
-}
-
-#[macro_export]
-macro_rules! log_info {
-	// error!(target: "my_target", key1 = 42, key2 = true; "a {} event", "log")
-    // error!(target: "my_target", "a {} event", "log")
-    (target: $target:expr, $($arg:tt)+) => ($crate::log!(target: $target, $crate::Level::Info, $($arg)+));
-
-	// log_info!("a {} event", "log")
-    ($($arg:tt)+) => ($crate::log!(&$crate::LOG_INFO_CONFIG, $($arg)+))
+	/// Logs something to the console with the default debug level, using the default logger.
+	/// 
+	/// # Example
+	/// 
+	/// ```rust
+	/// use cat_loggr::log_debug;
+	///
+	/// log_debug!("Default log");
+	/// 
+	/// let data = vec!["a", "b", "c"];
+	/// 
+	/// log_debug!("{:#?}", data);
+	/// ```
+	#[macro_export]
+	macro_rules! log_debug {
+		(target: $target:expr, $($arg:tt)+) => ($crate::log!(target: $target, "debug", $($arg)+));
+		($($arg:tt)+) => ($crate::log!("debug", $($arg)+))
+	}
 }

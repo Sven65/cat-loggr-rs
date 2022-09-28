@@ -8,3 +8,11 @@ publish = false
 [dependencies]
 owo-colors = "3.5.0"
 lazy_static = "1.4.0"
+chrono = "0.4.22"
+
+[dev-dependencies]
+test-case = "2.2.1"
+
+[features]
+default = ["macros"]
+macros = []
