@@ -7,9 +7,13 @@ use loggr_config::LoggrConfig;
 use owo_colors::{OwoColorize};
 
 use log_level::LogLevel;
+use types::{LogHooks, PreHookCallback, ArgHookCallback, PostHookCallback};
+
+use crate::types::PostHookCallbackParams;
 
 pub mod log_level;
 pub mod loggr_config;
+pub mod types;
 
 pub struct CatLoggr {
 	pub level_map: HashMap<String, LogLevel>,
@@ -19,6 +23,8 @@ pub struct CatLoggr {
 	timestamp_format: String,
 	shard: Option<String>,
 	shard_length: Option<usize>,
+
+	hooks: LogHooks,
 }
 
 impl Default for CatLoggr {
@@ -29,6 +35,7 @@ impl Default for CatLoggr {
 			timestamp_format: "%d/%m %H:%M:%S".to_string(),
 			shard: None,
 			shard_length: None,
+			hooks: LogHooks::new(),
 		}
     }
 }
@@ -49,7 +56,25 @@ impl CatLoggr {
 		default_levels
 	}
 
-	pub fn config(&mut self, options: LoggrConfig) {
+	pub fn add_pre_hook(&mut self, func: PreHookCallback) -> &mut Self {
+		self.hooks.pre.push(func);
+
+		self
+	}
+
+	pub fn add_arg_hook(&mut self, func: ArgHookCallback) -> &mut Self {
+		self.hooks.arg.push(func);
+
+		self
+	}
+
+	pub fn add_post_hook(&mut self, func: PostHookCallback) -> &mut Self {
+		self.hooks.post.push(func);
+
+		self
+	}
+
+	pub fn config(&mut self, options: LoggrConfig) -> &mut Self {
 		if options.timestamp_format.is_some() {
 			self.timestamp_format = options.timestamp_format.unwrap();
 		}
@@ -61,6 +86,8 @@ impl CatLoggr {
 		if options.shard_length.is_some() {
 			self.shard_length = options.shard_length;
 		}
+
+		self
 	}
 
 	pub fn new(options: Option<LoggrConfig>) -> Self {
@@ -75,8 +102,8 @@ impl CatLoggr {
 		logger
 	}
 
-	fn get_timestamp(&self) -> String {
-		let now: DateTime<Utc> = Utc::now();
+	fn get_timestamp(&self, time: Option<DateTime<Utc>>) -> String {
+		let now: DateTime<Utc> = time.unwrap_or(Utc::now());
 
 		let format_string = &self.timestamp_format;
 
@@ -161,6 +188,8 @@ impl CatLoggr {
 			"".to_string()
 		};
 
+		
+
 		let formatted_shard_text = shard_text.black().on_yellow();
 
 		let log_level = self.level_map.get(level).unwrap();
@@ -169,10 +198,28 @@ impl CatLoggr {
 	
 		let level_str = centered_str.style(log_level.style);
 		
-		let timestamp = self.get_timestamp();
+		let now = Utc::now();
+
+		let timestamp = self.get_timestamp(Some(now));
 		let formatted_timestamp = timestamp.black().on_white();
 	
-		println!("{}{}{} {}", formatted_shard_text, formatted_timestamp, level_str , text);
+		let mut final_string = format!("{}{}{} {}", formatted_shard_text, formatted_timestamp, level_str , text);
+
+		for hook in self.hooks.post.iter() {
+			let res = hook(PostHookCallbackParams {
+				text: text.to_string(),
+				date: now,
+				timestamp: timestamp.clone(),
+				level: level.to_string(),
+				shard: self.shard.clone(),
+			});
+
+			if res.is_some() {
+				final_string = res.unwrap();
+			}
+		}
+
+		println!("{}", final_string);
 	
 
 		self
