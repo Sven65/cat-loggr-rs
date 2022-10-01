@@ -64,7 +64,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+[![cat-loggr-rs Screen Shot][product-screenshot]](#)
 
 A simple, lightweight utility for making beautiful logs, based on [cat-loggr](https://github.com/Ratismal/cat-loggr)
 
@@ -197,3 +197,4 @@ Project Link: [https://github.com/Sven65/cat-loggr-rs](https://github.com/Sven65
 [issues-url]: https://github.com/Sven65/cat-loggr-rs/issues
 [license-shield]: https://img.shields.io/github/license/Sven65/cat-loggr-rs.svg?style=for-the-badge
 [license-url]: https://github.com/Sven65/cat-loggr-rs/blob/master/LICENSE.txt
+[product-screenshot]: ./images/demo.png

@@ -11,44 +11,42 @@ fn test_log() {
 		name: "Struct Name".to_string(),
 	};
 
-	let logger = cat_loggr::CatLoggr::new(None);
+	// let logger = cat_loggr::CatLoggr::new(None);
 
-	logger.log("test 123", "info")
-		.log("test 321", "fatal");
+	// logger.log("test 123", "info")
+	// 	.log("test 321", "fatal");
 
 	cat_loggr::CAT_LOGGR.lock().unwrap().config(LoggrConfig {
 		shard: Some("123".to_string()),
 		shard_length: Some(4),
 		..LoggrConfig::default()
-	}).add_post_hook(|data| -> Option<String> {
-		let string: String = "This is the new log".to_string();
+	});
 
-		Some(string)
-	}).set_level("init");
 
-	log_fatal!("Fatal log");
-	log_fatal!("Fatal log {:#?}", data);
+	log_error!("Error reading file: {:#?}", std::io::Error::new(std::io::ErrorKind::NotFound, "File not found"));
+	// log_error!("Error log {:#?}", data);
 
-	log_error!("Error log");
-	log_error!("Error log {:#?}", data);
+	log_warn!("Invalid session, reidentifying!");
+	// log_warn!("Warn log {:#?}", data);
 
-	log_warn!("Warn log");
-	log_warn!("Warn log {:#?}", data);
+	log_trace!("Tracing session");
+	// log_trace!("Trace log {:#?}", data);
 
-	log_trace!("Trace log");
-	log_trace!("Trace log {:#?}", data);
+	log_init!("Starting event interval!");
+	// log_init!("Init log {:#?}", data);
 
-	log_init!("Init log");
-	log_init!("Init log {:#?}", data);
+	log_info!("Posting to matt");
+	// log_info!("Info log {:#?}", data);
 
-	log_info!("Info log");
-	log_info!("Info log {:#?}", data);
+	log_verbose!("The data has been created");
+	// log_verbose!("Verbose log {:#?}", data);
+	log_fatal!("Error reading directory. Will not continue. {:#?}", std::io::Error::new(std::io::ErrorKind::NotFound, "Directory not found"));
 
-	log_verbose!("Verbose log");
-	log_verbose!("Verbose log {:#?}", data);
+	log_debug!("User logged in");
+	// log_debug!("Debug log {:#?}", data);
 
-	log_debug!("Debug log");
-	log_debug!("Debug log {:#?}", data);
+	// log_fatal!("Fatal log {:#?}", data);
+
 
 
 	// log_info!("Test");

@@ -1,19 +1,22 @@
 #![feature(doc_cfg)]
 
+#![doc = include_str!("../README.md")]
+
 use std::{fmt, collections::HashMap, sync::Mutex};
 use chrono::{DateTime, Utc};
 use lazy_static::{lazy_static,};
-use loggr_config::LoggrConfig;
+pub use loggr_config::LoggrConfig;
 use owo_colors::{OwoColorize};
 
-use log_level::LogLevel;
+pub use log_level::LogLevel;
 use types::{LogHooks, PreHookCallback, ArgHookCallback, PostHookCallback};
 
-use crate::types::{PostHookCallbackParams, PreHookCallbackParams};
+use crate::types::{PostHookCallbackParams};
 
 pub mod log_level;
 pub mod loggr_config;
 pub mod types;
+
 
 pub struct CatLoggr {
 	pub level_map: HashMap<String, LogLevel>,
@@ -66,24 +69,64 @@ impl CatLoggr {
 		default_levels
 	}
 
+	#[doc(hidden)]
 	pub fn add_pre_hook(&mut self, func: PreHookCallback) -> &mut Self {
 		self.hooks.pre.push(func);
 
 		self
 	}
 
+	#[doc(hidden)]
 	pub fn add_arg_hook(&mut self, func: ArgHookCallback) -> &mut Self {
 		self.hooks.arg.push(func);
 
 		self
 	}
 
+	/// Adds a post hook, ran after formatting, but before final output
+	/// The string returned by the hook will be the text after the level name.
+	/// 
+	/// # Arguments
+	/// * `func` - The function to run
+	/// 
+	/// # Examples
+	/// 
+	/// ```rust
+	/// use cat_loggr::CatLoggr;
+	/// let mut logger = CatLoggr::new(None);
+	/// 
+	/// logger.add_post_hook(|params| -> Option<String> {
+	/// 	let string: String = "New log".to_string();
+	/// 	Some(string)
+	/// });
+	/// ```
 	pub fn add_post_hook(&mut self, func: PostHookCallback) -> &mut Self {
 		self.hooks.post.push(func);
 
 		self
 	}
 
+	/// Configures the logger
+	/// 
+	/// # Arguments
+	/// * `options` - The options to configure with
+	/// 
+	/// # Examples
+	/// 
+	/// ```rust
+	/// // Configuring the levels
+	/// 
+	/// use cat_loggr::{CatLoggr, LogLevel, LoggrConfig};
+	/// let mut logger = CatLoggr::new(None);
+	/// 
+	/// logger.config(LoggrConfig {
+	/// 	levels: Some(vec![
+	/// 		LogLevel   { name: "fatal".to_string(), style: owo_colors::Style::new().red().on_black(), position: None },
+	/// 		LogLevel   { name: "info".to_string(), style: owo_colors::Style::new().red().on_black(), position: None }	
+	/// 	]),
+	/// 	..LoggrConfig::default()
+	/// });
+	/// ```
 	pub fn config(&mut self, options: LoggrConfig) -> &mut Self {
 		if options.timestamp_format.is_some() {
 			self.timestamp_format = options.timestamp_format.unwrap();
@@ -110,6 +153,27 @@ impl CatLoggr {
 		self
 	}
 
+	/// Creates an instance of the logger
+	/// 
+	/// # Arguments
+	/// * `options` - The options to instantiate with
+	/// 
+	/// # Examples
+	/// 
+	/// ```rust
+	/// // Create with levels and shard ID
+	/// 
+	/// use cat_loggr::{CatLoggr, LoggrConfig, log_level::LogLevel};
+	/// let logger = CatLoggr::new(Some(LoggrConfig {
+	///		levels: Some(vec![
+	/// 		LogLevel   { name: "fatal".to_string(), style: owo_colors::Style::new().red().on_black(), position: None },
+	/// 		LogLevel   { name: "info".to_string(), style: owo_colors::Style::new().red().on_black(), position: None }	
+	/// 	]),
+	/// 	shard: Some("123".to_string()),
+	/// 	shard_length: Some(4),
+	/// 	..LoggrConfig::default()
+	/// }));
+	/// ```
 	pub fn new(options: Option<LoggrConfig>) -> Self {
 		let mut logger = Self::default();
 
@@ -125,6 +189,7 @@ impl CatLoggr {
 		logger
 	}
 
+	#[doc(hidden)]
 	fn get_timestamp(&self, time: Option<DateTime<Utc>>) -> String {
 		let now: DateTime<Utc> = time.unwrap_or(Utc::now());
 
@@ -146,12 +211,12 @@ impl CatLoggr {
 	/// ```
 	/// use cat_loggr::{CatLoggr, LogLevel};
 	/// 
-	/// let logger = CatLoggr::new(None);
+	/// let mut logger = CatLoggr::new(None);
 	/// 
-	/// logger.setLevels(vec![
+	/// logger.set_levels(vec![
 	/// 	LogLevel   { name: "fatal".to_string(), style: owo_colors::Style::new().red().on_black(), position: None },
 	/// 	LogLevel   { name: "info".to_string(), style: owo_colors::Style::new().red().on_black(), position: None }
-	/// ])
+	/// ]);
 	/// ```
 	pub fn set_levels(&mut self, levels: Vec<LogLevel>) -> &Self {
 		self.level_map.clear();
@@ -180,7 +245,7 @@ impl CatLoggr {
 	}
 
 
-	/// Sets hte level threshold. Only logs on and above the threshold will be output
+	/// Sets the level threshold. Only logs on and above the threshold will be output
 	/// 
 	/// # Arguments
 	/// * `level` - The name of the level threshold
@@ -212,7 +277,8 @@ impl CatLoggr {
 		}
 	}
 
-	/// Writes the log by taking [`fmt::Arguments`]
+	#[doc(hidden)]
+	/// Internal function that writes the log by taking [`fmt::Arguments`]
 	/// 
 	/// # Arguments
 	/// * `args` - The text to write
@@ -221,6 +287,7 @@ impl CatLoggr {
 		self.log(format!("{}", args).as_str(), level);
 	}
 
+	#[doc(hidden)]
 	fn get_level(&self) -> &LogLevel {
 		self.level_map.get(&self.level_name.clone().unwrap()).unwrap()
 	}
@@ -230,6 +297,17 @@ impl CatLoggr {
 	/// # Arguments
 	/// * `text` - The text to write
 	/// * `level` - The level to write at
+	/// 
+	/// # Examples
+	/// 
+	/// ```rust
+	/// // Log to the `info` level
+	/// 
+	/// use cat_loggr::CatLoggr;
+	/// let logger = CatLoggr::new(None);
+	/// 
+	/// logger.log("This is a log", "info");
+	/// ```
 	pub fn log(
 		&self,
 		text: &str,
@@ -268,7 +346,7 @@ impl CatLoggr {
 		let timestamp = self.get_timestamp(Some(now));
 		let formatted_timestamp = timestamp.black().on_white();
 	
-		let mut final_text: String = "".to_string();
+		let mut final_text: String = text.to_string();
 
 		for hook in self.hooks.post.iter() {
 			let res = hook(PostHookCallbackParams {
