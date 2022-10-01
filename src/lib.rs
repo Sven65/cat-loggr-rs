@@ -32,6 +32,8 @@ pub struct CatLoggr {
 	hooks: LogHooks,
 
 	level_name: Option<String>,
+
+    color_enabled: bool,
 }
 
 impl Default for CatLoggr {
@@ -45,6 +47,7 @@ impl Default for CatLoggr {
 			shard_length: None,
 			hooks: LogHooks::new(),
 			level_name: None,
+            color_enabled: true
 		}
     }
 }
@@ -149,6 +152,8 @@ impl CatLoggr {
 		} else {
 			self.level_name = Some(top::<LogLevel>(&mut self.levels).unwrap().name);
 		}
+
+        self.color_enabled = options.color_enabled;
 
 		self
 	}
@@ -324,7 +329,6 @@ impl CatLoggr {
 		if log_level.position.unwrap() > current_log_level.position.unwrap() {
 			return self;
 		}
-	  
 
 		let shard_text = if self.shard.is_some() {
 			CatLoggr::centre_pad(&self.shard.clone().unwrap(), self.shard_length.unwrap())
@@ -332,19 +336,14 @@ impl CatLoggr {
 			"".to_string()
 		};
 
-		
-
-		let formatted_shard_text = shard_text.black().on_yellow();
-
-	
+		let formatted_shard_text = if self.color_enabled { shard_text.black().on_yellow().to_string() } else { shard_text };
 		let centered_str = CatLoggr::centre_pad(&log_level.name, self.max_length);
-	
-		let level_str = centered_str.style(log_level.style);
-		
+		let level_str = if self.color_enabled { centered_str.style(log_level.style).to_string()} else { centered_str};
+
 		let now = Utc::now();
 
 		let timestamp = self.get_timestamp(Some(now));
-		let formatted_timestamp = timestamp.black().on_white();
+		let formatted_timestamp = if self.color_enabled { timestamp.black().on_white().to_string() } else { timestamp.clone() };
 	
 		let mut final_text: String = text.to_string();
 
@@ -362,11 +361,9 @@ impl CatLoggr {
 			}
 		}
 
-		let final_string = format!("{}{}{} {}", formatted_shard_text, formatted_timestamp, level_str , final_text);
-
+		let final_string = format!("{}{}{} {}", formatted_shard_text, formatted_timestamp, level_str, final_text);
 
 		println!("{}", final_string);
-	
 
 		self
 	}
