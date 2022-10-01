@@ -133,10 +133,16 @@ _For more examples, please refer to the [Documentation](https://docs.rs/cat-logg
 <!-- ROADMAP -->
 ## Roadmap
 
-<!-- - [ ] Feature 1
-- [ ] Feature 2
-- [ ] Feature 3
-    - [ ] Nested Feature -->
+- [ ] Feature parity
+    - [x] Custom log levels
+    - [x] After hooks
+    - [x] Level threshold
+    - [ ] Pre-hook
+    - [ ] Argument hooks
+    - [ ] Meta
+      - [ ] Color option
+- [ ] Macro for panics
+- [ ] Tests
 
 See the [open issues](https://github.com/Sven65/cat-loggr-rs/issues) for a full list of proposed features (and known issues).
 
