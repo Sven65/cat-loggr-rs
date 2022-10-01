@@ -3,7 +3,14 @@ name = "cat-loggr"
 version = "1.0.0"
 edition = "2021"
 license = "MIT"
-publish = false
+description = "A simple, lightweight utility for making beautiful logs"
+documentation = "https://docs.rs/cat-loggr"
+readme = "README.md"
+homepage = "https://github.com/Sven65/cat-loggr-rs/"
+repository = "https://github.com/Sven65/cat-loggr-rs/"
+keywords = ["logs", "console"]
+categories = ["command-line-interface", "development-tools::debugging"]
+exclude = ["tests/", "images/", ".*"]
 
 [dependencies]
 owo-colors = "3.5.0"
