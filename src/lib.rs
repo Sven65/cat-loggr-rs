@@ -9,7 +9,7 @@ use owo_colors::{OwoColorize};
 use log_level::LogLevel;
 use types::{LogHooks, PreHookCallback, ArgHookCallback, PostHookCallback};
 
-use crate::types::PostHookCallbackParams;
+use crate::types::{PostHookCallbackParams, PreHookCallbackParams};
 
 pub mod log_level;
 pub mod loggr_config;
@@ -97,6 +97,10 @@ impl CatLoggr {
 			self.shard_length = options.shard_length;
 		}
 
+		if options.levels.is_some() {
+			self.set_levels(options.levels.unwrap());
+		}
+
 		if options.level.is_some() {
 			self.level_name = options.level;
 		} else {
@@ -136,6 +140,19 @@ impl CatLoggr {
 	/// # Arguments
 	/// 
 	/// * `levels` - New levels to override with, in order from high to low priority
+	/// 
+	/// # Examples
+	/// 
+	/// ```
+	/// use cat_loggr::{CatLoggr, LogLevel};
+	/// 
+	/// let logger = CatLoggr::new(None);
+	/// 
+	/// logger.setLevels(vec![
+	/// 	LogLevel   { name: "fatal".to_string(), style: owo_colors::Style::new().red().on_black(), position: None },
+	/// 	LogLevel   { name: "info".to_string(), style: owo_colors::Style::new().red().on_black(), position: None }
+	/// ])
+	/// ```
 	pub fn set_levels(&mut self, levels: Vec<LogLevel>) -> &Self {
 		self.level_map.clear();
 		self.levels = levels;
@@ -229,6 +246,7 @@ impl CatLoggr {
 		if log_level.position.unwrap() > current_log_level.position.unwrap() {
 			return self;
 		}
+	  
 
 		let shard_text = if self.shard.is_some() {
 			CatLoggr::centre_pad(&self.shard.clone().unwrap(), self.shard_length.unwrap())
