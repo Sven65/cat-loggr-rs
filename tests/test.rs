@@ -21,12 +21,10 @@ fn test_log() {
 		shard_length: Some(4),
 		..LoggrConfig::default()
 	}).add_post_hook(|data| -> Option<String> {
-		println!("Data {:#?}", data);
-
 		let string: String = "This is the new log".to_string();
 
 		Some(string)
-	});
+	}).set_level("init");
 
 	log_fatal!("Fatal log");
 	log_fatal!("Fatal log {:#?}", data);

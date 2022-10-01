@@ -24,7 +24,11 @@ pub struct CatLoggr {
 	shard: Option<String>,
 	shard_length: Option<usize>,
 
+	levels: Vec::<LogLevel>,
+
 	hooks: LogHooks,
+
+	level_name: Option<String>,
 }
 
 impl Default for CatLoggr {
@@ -32,25 +36,31 @@ impl Default for CatLoggr {
         Self {
 			level_map: Default::default(),
 			max_length: Default::default(),
+			levels: Default::default(),
 			timestamp_format: "%d/%m %H:%M:%S".to_string(),
 			shard: None,
 			shard_length: None,
 			hooks: LogHooks::new(),
+			level_name: None,
 		}
     }
+}
+
+fn top<T: Clone>(vec: &mut Vec<T>) -> Option<T> {
+	vec.last().cloned()
 }
 
 impl CatLoggr {
 	fn get_default_levels() -> Vec<LogLevel> {
 		let default_levels: Vec<LogLevel> = vec![
-			LogLevel   { name: "fatal".to_string(), style: owo_colors::Style::new().red().on_black() },
-			LogLevel   { name: "error".to_string(), style: owo_colors::Style::new().black().on_red() },
-			LogLevel   { name: "warn".to_string(), style: owo_colors::Style::new().black().on_yellow() },
-			LogLevel   { name: "trace".to_string(), style: owo_colors::Style::new().green().on_black() },
-			LogLevel   { name: "init".to_string(), style: owo_colors::Style::new().black().on_blue() },
-			LogLevel   { name: "info".to_string(), style: owo_colors::Style::new().black().on_green() },
-			LogLevel   { name: "verbose".to_string(), style: owo_colors::Style::new().black().on_cyan() },
-			LogLevel   { name: "debug".to_string(), style: owo_colors::Style::new().magenta().on_black() }
+			LogLevel   { name: "fatal".to_string(), style: owo_colors::Style::new().red().on_black(), position: None },
+			LogLevel   { name: "error".to_string(), style: owo_colors::Style::new().black().on_red(), position: None },
+			LogLevel   { name: "warn".to_string(), style: owo_colors::Style::new().black().on_yellow(), position: None },
+			LogLevel   { name: "trace".to_string(), style: owo_colors::Style::new().green().on_black(), position: None },
+			LogLevel   { name: "init".to_string(), style: owo_colors::Style::new().black().on_blue(), position: None },
+			LogLevel   { name: "info".to_string(), style: owo_colors::Style::new().black().on_green(), position: None},
+			LogLevel   { name: "verbose".to_string(), style: owo_colors::Style::new().black().on_cyan(), position: None },
+			LogLevel   { name: "debug".to_string(), style: owo_colors::Style::new().magenta().on_black(), position: None }
 		];
 
 		default_levels
@@ -87,18 +97,27 @@ impl CatLoggr {
 			self.shard_length = options.shard_length;
 		}
 
+		if options.level.is_some() {
+			self.level_name = options.level;
+		} else {
+			self.level_name = Some(top::<LogLevel>(&mut self.levels).unwrap().name);
+		}
+
 		self
 	}
 
 	pub fn new(options: Option<LoggrConfig>) -> Self {
 		let mut logger = Self::default();
 
+		logger.set_levels(Self::get_default_levels());
+
 		if options.is_some() {
 			logger.config(options.unwrap());
+		} else {
+			logger.level_name = Some(top::<LogLevel>(&mut logger.levels).unwrap().name);
 		}
 
-		logger.set_levels(Self::get_default_levels());
-		
+
 		logger
 	}
 
@@ -116,13 +135,15 @@ impl CatLoggr {
 	/// 
 	/// # Arguments
 	/// 
-	/// * `levels` - New levels to override with
+	/// * `levels` - New levels to override with, in order from high to low priority
 	pub fn set_levels(&mut self, levels: Vec<LogLevel>) -> &Self {
 		self.level_map.clear();
+		self.levels = levels;
 
 		let mut max = 0;
 
-		for level in levels.iter() {
+		for (position, level) in self.levels.iter_mut().enumerate() {
+			level.position = Some(position);
 
 			max = if level.name.len() > max {
 				level.name.len()
@@ -137,6 +158,22 @@ impl CatLoggr {
 		}
 
 		self.max_length = max + 2;
+
+		self
+	}
+
+
+	/// Sets hte level threshold. Only logs on and above the threshold will be output
+	/// 
+	/// # Arguments
+	/// * `level` - The name of the level threshold
+	pub fn set_level(&mut self, level: &str) -> &Self {
+		if !self.level_map.contains_key(level) {
+			panic!("The level `{}` level doesn't exist.", level);
+		}
+
+		self.level_name = Some(level.to_string());
+		
 
 		self
 	}
@@ -167,6 +204,10 @@ impl CatLoggr {
 		self.log(format!("{}", args).as_str(), level);
 	}
 
+	fn get_level(&self) -> &LogLevel {
+		self.level_map.get(&self.level_name.clone().unwrap()).unwrap()
+	}
+
 	/// Writes the log
 	/// 
 	/// # Arguments
@@ -182,6 +223,13 @@ impl CatLoggr {
 			panic!("The level `{}` level doesn't exist.", level);
 		}
 
+		let current_log_level = self.get_level();
+		let log_level = self.level_map.get(level).unwrap();
+
+		if log_level.position.unwrap() > current_log_level.position.unwrap() {
+			return self;
+		}
+
 		let shard_text = if self.shard.is_some() {
 			CatLoggr::centre_pad(&self.shard.clone().unwrap(), self.shard_length.unwrap())
 		} else {
@@ -192,7 +240,6 @@ impl CatLoggr {
 
 		let formatted_shard_text = shard_text.black().on_yellow();
 
-		let log_level = self.level_map.get(level).unwrap();
 	
 		let centered_str = CatLoggr::centre_pad(&log_level.name, self.max_length);
 	
@@ -203,7 +250,7 @@ impl CatLoggr {
 		let timestamp = self.get_timestamp(Some(now));
 		let formatted_timestamp = timestamp.black().on_white();
 	
-		let mut final_string = format!("{}{}{} {}", formatted_shard_text, formatted_timestamp, level_str , text);
+		let mut final_text: String = "".to_string();
 
 		for hook in self.hooks.post.iter() {
 			let res = hook(PostHookCallbackParams {
@@ -215,9 +262,12 @@ impl CatLoggr {
 			});
 
 			if res.is_some() {
-				final_string = res.unwrap();
+				final_text = res.unwrap();
 			}
 		}
+
+		let final_string = format!("{}{}{} {}", formatted_shard_text, formatted_timestamp, level_str , final_text);
+
 
 		println!("{}", final_string);
 	
