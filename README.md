@@ -100,7 +100,7 @@ This is an example of how to list things you need to use the software and how to
 ## Usage
 
 
-```rs
+```rust
 use cat_loggr::CatLoggr;
 
 fn main() {
@@ -110,7 +110,7 @@ fn main() {
 }
 ```
 
-_For more examples, please refer to the [Documentation](https://example.com)_
+_For more examples, please refer to the [Documentation](https://docs.rs/cat-loggr/)_
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -133,10 +133,10 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] Feature 1
+<!-- - [ ] Feature 1
 - [ ] Feature 2
 - [ ] Feature 3
-    - [ ] Nested Feature
+    - [ ] Nested Feature -->
 
 See the [open issues](https://github.com/Sven65/cat-loggr-rs/issues) for a full list of proposed features (and known issues).
 
@@ -197,4 +197,4 @@ Project Link: [https://github.com/Sven65/cat-loggr-rs](https://github.com/Sven65
 [issues-url]: https://github.com/Sven65/cat-loggr-rs/issues
 [license-shield]: https://img.shields.io/github/license/Sven65/cat-loggr-rs.svg?style=for-the-badge
 [license-url]: https://github.com/Sven65/cat-loggr-rs/blob/master/LICENSE.txt
-[product-screenshot]: ./images/demo.png
+[product-screenshot]: https://raw.githubusercontent.com/Sven65/cat-loggr-rs/master/images/demo.png
