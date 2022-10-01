@@ -21,7 +21,7 @@
   <p align="center">
 	A simple, lightweight utility for making beautiful logs, based on <a href="https://github.com/Ratismal/cat-loggr">cat-loggr</a>
     <br />
-    <a href="https://github.com/Sven65/cat-loggr-rs"><strong>Explore the docs »</strong></a>
+    <a href="https://docs.rs/cat-loggr"><strong>Explore the docs »</strong></a>
     <br />
     <br />
     ·
@@ -39,16 +39,6 @@
   <ol>
     <li>
       <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
@@ -71,30 +61,6 @@ A simple, lightweight utility for making beautiful logs, based on [cat-loggr](ht
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-<!-- GETTING STARTED -->
-## Getting Started
-
-To get a local copy up and running follow these simple example steps.
-
-### Prerequisites
-
-This is an example of how to list things you need to use the software and how to install them.
-
-* [Rust](https://www.rust-lang.org/tools/install)
-* [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html)
-
-### Installation
-
-1. Install from cargo
-   ```sh
-	cargo install cat-loggr
-   ```
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- USAGE EXAMPLES -->
 ## Usage
