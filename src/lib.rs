@@ -130,7 +130,9 @@ impl CatLoggr {
 	/// 	..LoggrConfig::default()
 	/// });
 	/// ```
-	pub fn config(&mut self, options: LoggrConfig) -> &mut Self {
+	pub fn config(&mut self, options: Option<LoggrConfig>) -> &mut Self {
+		let options = options.unwrap_or_default();		
+
 		if options.timestamp_format.is_some() {
 			self.timestamp_format = options.timestamp_format.unwrap();
 		}
@@ -183,12 +185,7 @@ impl CatLoggr {
 	/// ```
 	pub fn new(options: Option<LoggrConfig>) -> Self {
 		let mut logger = Self::default();
-
-		if options.is_some() {
-			logger.config(options.unwrap());
-		} else {
-			logger.config(LoggrConfig::default());	
-		}
+		logger.config(options);	
 
 		logger
 	}
