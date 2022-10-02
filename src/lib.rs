@@ -145,6 +145,8 @@ impl CatLoggr {
 
 		if options.levels.is_some() {
 			self.set_levels(options.levels.unwrap());
+		} else {
+			self.set_levels(Self::get_default_levels());	
 		}
 
 		if options.level.is_some() {
@@ -182,14 +184,11 @@ impl CatLoggr {
 	pub fn new(options: Option<LoggrConfig>) -> Self {
 		let mut logger = Self::default();
 
-		logger.set_levels(Self::get_default_levels());
-
 		if options.is_some() {
 			logger.config(options.unwrap());
 		} else {
-			logger.level_name = Some(top::<LogLevel>(&mut logger.levels).unwrap().name);
+			logger.config(LoggrConfig::default());	
 		}
-
 
 		logger
 	}
