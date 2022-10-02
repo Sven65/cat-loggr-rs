@@ -33,12 +33,12 @@ pub struct CatLoggr {
 
 	level_name: Option<String>,
 
-    color_enabled: bool,
+	color_enabled: bool,
 }
 
 impl Default for CatLoggr {
-    fn default() -> Self {
-        Self {
+	fn default() -> Self {
+		Self {
 			level_map: Default::default(),
 			max_length: Default::default(),
 			levels: Default::default(),
@@ -47,9 +47,9 @@ impl Default for CatLoggr {
 			shard_length: None,
 			hooks: LogHooks::new(),
 			level_name: None,
-            color_enabled: true
+			color_enabled: true
 		}
-    }
+	}
 }
 
 fn top<T: Clone>(vec: &mut Vec<T>) -> Option<T> {
@@ -153,7 +153,7 @@ impl CatLoggr {
 			self.level_name = Some(top::<LogLevel>(&mut self.levels).unwrap().name);
 		}
 
-        self.color_enabled = options.color_enabled;
+		self.color_enabled = options.color_enabled;
 
 		self
 	}

@@ -25,7 +25,7 @@ impl Default for LoggrConfig {
 			shard_length: None,
 			level: None,
 			levels: None,
-            color_enabled: true,
+			color_enabled: true,
 		}
 	}
 }
