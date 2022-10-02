@@ -14,6 +14,7 @@ pub struct LoggrConfig {
 	/// Custom level definitions
 	pub levels: Option<Vec<LogLevel>>,
 
+	/// Use colors when outputting
 	pub color_enabled: bool,
 }
 

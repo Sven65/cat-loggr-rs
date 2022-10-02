@@ -122,15 +122,18 @@ impl CatLoggr {
 	/// use cat_loggr::{CatLoggr, LogLevel, LoggrConfig};
 	/// let mut logger = CatLoggr::new(None);
 	/// 
-	/// logger.config(LoggrConfig {
+	/// logger.config(Some(LoggrConfig {
 	/// 	levels: Some(vec![
 	/// 		LogLevel   { name: "fatal".to_string(), style: owo_colors::Style::new().red().on_black(), position: None },
 	/// 		LogLevel   { name: "info".to_string(), style: owo_colors::Style::new().red().on_black(), position: None }	
 	/// 	]),
+	///		color_enabled: false,
 	/// 	..LoggrConfig::default()
-	/// });
+	/// }));
 	/// ```
-	pub fn config(&mut self, options: LoggrConfig) -> &mut Self {
+	pub fn config(&mut self, options: Option<LoggrConfig>) -> &mut Self {
+		let options = options.unwrap_or_default();		
+
 		if options.timestamp_format.is_some() {
 			self.timestamp_format = options.timestamp_format.unwrap();
 		}
@@ -145,6 +148,8 @@ impl CatLoggr {
 
 		if options.levels.is_some() {
 			self.set_levels(options.levels.unwrap());
+		} else {
+			self.set_levels(Self::get_default_levels());	
 		}
 
 		if options.level.is_some() {
@@ -181,15 +186,7 @@ impl CatLoggr {
 	/// ```
 	pub fn new(options: Option<LoggrConfig>) -> Self {
 		let mut logger = Self::default();
-
-		logger.set_levels(Self::get_default_levels());
-
-		if options.is_some() {
-			logger.config(options.unwrap());
-		} else {
-			logger.level_name = Some(top::<LogLevel>(&mut logger.levels).unwrap().name);
-		}
-
+		logger.config(options);	
 
 		logger
 	}
