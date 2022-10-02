@@ -13,6 +13,8 @@ pub struct LoggrConfig {
 
 	/// Custom level definitions
 	pub levels: Option<Vec<LogLevel>>,
+
+	pub color_enabled: bool,
 }
 
 impl Default for LoggrConfig {
@@ -23,6 +25,7 @@ impl Default for LoggrConfig {
 			shard_length: None,
 			level: None,
 			levels: None,
+			color_enabled: true,
 		}
 	}
 }
