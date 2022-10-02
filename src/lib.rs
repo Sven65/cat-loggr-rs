@@ -122,13 +122,14 @@ impl CatLoggr {
 	/// use cat_loggr::{CatLoggr, LogLevel, LoggrConfig};
 	/// let mut logger = CatLoggr::new(None);
 	/// 
-	/// logger.config(LoggrConfig {
+	/// logger.config(Some(LoggrConfig {
 	/// 	levels: Some(vec![
 	/// 		LogLevel   { name: "fatal".to_string(), style: owo_colors::Style::new().red().on_black(), position: None },
 	/// 		LogLevel   { name: "info".to_string(), style: owo_colors::Style::new().red().on_black(), position: None }	
 	/// 	]),
+	///		color_enabled: false,
 	/// 	..LoggrConfig::default()
-	/// });
+	/// }));
 	/// ```
 	pub fn config(&mut self, options: Option<LoggrConfig>) -> &mut Self {
 		let options = options.unwrap_or_default();		
