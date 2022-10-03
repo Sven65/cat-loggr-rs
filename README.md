@@ -108,7 +108,7 @@ _For more examples, please refer to the [Documentation](https://docs.rs/cat-logg
     - [ ] Meta
       - [ ] Color option
 - [ ] Macro for panics
-- [ ] Tests
+- [x] Tests
 
 See the [open issues](https://github.com/Sven65/cat-loggr-rs/issues) for a full list of proposed features (and known issues).
 

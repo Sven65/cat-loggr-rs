@@ -17,7 +17,6 @@ pub mod log_level;
 pub mod loggr_config;
 pub mod types;
 
-
 pub struct CatLoggr {
 	pub level_map: HashMap<String, LogLevel>,
 
@@ -220,7 +219,7 @@ impl CatLoggr {
 	/// 	LogLevel   { name: "info".to_string(), style: owo_colors::Style::new().red().on_black(), position: None }
 	/// ]);
 	/// ```
-	pub fn set_levels(&mut self, levels: Vec<LogLevel>) -> &Self {
+	pub fn set_levels(&mut self, levels: Vec<LogLevel>) -> &mut Self {
 		self.level_map.clear();
 		self.levels = levels;
 
@@ -251,9 +250,9 @@ impl CatLoggr {
 	/// 
 	/// # Arguments
 	/// * `level` - The name of the level threshold
-	pub fn set_level(&mut self, level: &str) -> &Self {
+	pub fn set_level(&mut self, level: &str) -> &mut Self {
 		if !self.level_map.contains_key(level) {
-			panic!("The level `{}` level doesn't exist.", level);
+			panic!("The level `{}` doesn't exist.", level);
 		}
 
 		self.level_name = Some(level.to_string());
@@ -566,4 +565,100 @@ mod macros {
 		(target: $target:expr, $($arg:tt)+) => ($crate::log!(target: $target, "debug", $($arg)+));
 		($($arg:tt)+) => ($crate::log!("debug", $($arg)+))
 	}
+}
+
+#[cfg(test)]
+mod test {
+
+	use crate::LogLevel;
+	use crate::CatLoggr;
+
+	mod should_instantiate {
+		use crate::LogLevel;
+		use crate::LoggrConfig;
+		use crate::CatLoggr;
+
+
+		#[test]
+		fn should_instantiate_with_none_opts() {
+			let loggr = CatLoggr::new(None);
+
+			assert_ne!(loggr.level_map.len(), 0, "Loggr not made")
+		}
+
+		#[test]
+		fn should_instantiate_with_shard_id() {
+			let loggr = CatLoggr::new(Some(LoggrConfig {
+				shard: Some("shard-id".to_string()),
+				..Default::default()
+			}));
+		
+			assert_eq!(loggr.shard, Some("shard-id".to_string()))
+		}
+
+		#[test]
+		fn should_instantiate_with_default_level() {
+			let loggr = CatLoggr::new(Some(LoggrConfig {
+				level: Some("fatal".to_string()),
+				..Default::default()
+			}));
+		
+			assert_eq!(loggr.level_name, Some("fatal".to_string()))
+		}
+
+		#[test]
+		fn should_instantiate_with_default_level_definitions() {
+			let loggr = CatLoggr::new(Some(LoggrConfig {
+				levels: Some(vec![
+					LogLevel { name: "catnip".to_string(), style: owo_colors::Style::new().red().on_black(), position: None },
+					LogLevel { name: "fish".to_string(), style: owo_colors::Style::new().black().on_red(), position: None }
+				]),
+				..Default::default()
+			}));
+
+			assert_eq!(loggr.levels.len(), 2);
+			assert_eq!(loggr.level_name, Some("fish".to_string()));
+		}
+	}
+	
+	mod set_level {
+		use crate::CatLoggr;
+
+		#[test]
+		#[should_panic(expected = "The level `catnip` doesn't exist.")]
+		fn should_panic_if_level_doesnt_exist() {
+			let mut loggr = CatLoggr::new(None);
+
+			loggr.set_level("catnip");
+
+			assert_eq!(loggr.levels.len(), 2);
+			assert_eq!(loggr.level_name, Some("fish".to_string()));
+		}
+	}
+
+	#[test]
+	fn should_chain_properly() {
+		let mut loggr = CatLoggr::new(None);
+
+		loggr.set_levels(vec![
+			LogLevel { name: "catnip".to_string(), style: owo_colors::Style::new().red().on_black(), position: None },
+			LogLevel { name: "fish".to_string(), style: owo_colors::Style::new().black().on_red(), position: None }
+		])
+		.set_level("catnip");
+
+		assert_eq!(&loggr.level_name.unwrap(), "catnip");
+	}
+
+	// TODO: This test. Currently disabled because waiting for support for changing stdout 
+	// #[test]
+	// fn should_execute_post_hooks() {
+	// 	let mut loggr = CatLoggr::new(None);
+
+	// 	loggr.add_post_hook(|params| {
+	// 		Some("new text".to_string())
+	// 	});
+
+	// 	loggr.log("a b c", "info");
+
+	// }
 }
