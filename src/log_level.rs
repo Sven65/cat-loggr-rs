@@ -12,7 +12,7 @@ pub struct LogLevel {
 }
 
 impl LogLevel {
-	pub fn new(name: String, style: Style ) -> Self {
+	pub fn new(name: String, style: Style) -> Self {
 		Self { name, style, position: None }
 	}
 }
