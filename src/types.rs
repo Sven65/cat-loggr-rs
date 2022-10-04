@@ -32,28 +32,26 @@ pub struct PreHookCallbackParams<'a> {
 	pub shard: Option<String>,
 }
 
-
 /// An argument hook callback function
-/// 
+///
 /// # Arguments
 /// * `args` - The provided argument
 /// * `date` - The timestamp of execution
 pub type ArgHookCallback = fn(args: Option<fmt::Arguments>, date: DateTime<Utc>) -> Option<String>;
 
 /// A post hook callback function
-/// 
+///
 /// # Arguments
 /// * `params` - The parameters that are sent by the hook
 pub type PostHookCallback = fn(params: PostHookCallbackParams) -> Option<String>;
 
 /// A pre hook callback function
-/// 
+///
 /// # Arguments
 /// * `params` - The parameters that are sent by the hook
 pub type PreHookCallback = fn(params: PreHookCallbackParams) -> Option<String>;
 
-
-
+#[derive(Default)]
 pub struct LogHooks {
 	pub pre: Vec<PreHookCallback>,
 	pub arg: Vec<ArgHookCallback>,
@@ -61,7 +59,7 @@ pub struct LogHooks {
 }
 
 impl LogHooks {
-	pub fn new () -> Self {
+	pub fn new() -> Self {
 		Self {
 			pre: Vec::<PreHookCallback>::new(),
 			arg: Vec::<ArgHookCallback>::new(),
