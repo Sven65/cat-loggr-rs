@@ -1,4 +1,4 @@
-#![feature(doc_cfg)]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![doc = include_str!("../README.md")]
 
 use chrono::{DateTime, Utc};
@@ -381,11 +381,10 @@ impl CatLoggr {
 
 #[cfg(feature = "macros")]
 lazy_static! {
-	#[doc(cfg(feature = "macros"))]
+	#[cfg(feature = "macros")]
 	pub static ref CAT_LOGGR: Mutex<CatLoggr> = Mutex::new(CatLoggr::new(None));
 }
 
-#[doc(cfg(feature = "macros"))]
 #[cfg(feature = "macros")]
 mod macros {
 	/// Logs something to the console with a specified level, using the default logger.
@@ -405,6 +404,7 @@ mod macros {
 	///
 	///
 	#[macro_export]
+	#[cfg(feature = "macros")]
 	macro_rules! log {
 		// log!(target: "my_target", Level::Info; key1 = 42, key2 = true; "a {} event", "log");
 		(target: $target:expr, $lvl:expr, $($key:tt = $value:expr),+; $($arg:tt)+) => ({

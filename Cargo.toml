@@ -1,6 +1,6 @@
 [package]
 name = "cat-loggr"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 license = "MIT"
 description = "A simple, lightweight utility for making beautiful logs"
@@ -23,3 +23,7 @@ test-case = "2.2.1"
 [features]
 default = ["macros"]
 macros = []
+
+[package.metadata.docs.rs]
+features = ["default", "macros"]
+rustdoc-args = ["--cfg", "docsrs"]
